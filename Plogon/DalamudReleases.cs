@@ -9,9 +9,6 @@ using System.Threading.Tasks;
 using Serilog;
 
 using Tomlyn;
-using SharpCompress.Archives;
-using SharpCompress.Common;
-using SharpCompress.Readers;
 
 namespace Plogon;
 
@@ -20,7 +17,7 @@ namespace Plogon;
 /// </summary>
 public class DalamudReleases
 {
-    private const string URL_TEMPLATE = "https://aonyx.ffxiv.wang/Dalamud/Release/VersionInfo?track={0}";
+    private const string URL_TEMPLATE = "https://ndiv.rayd.cc/Dalamud/Release/VersionInfo?track={0}";
 
     private readonly Overrides? overrides;
 
@@ -49,7 +46,7 @@ public class DalamudReleases
 
     private async Task<DalamudVersionInfo?> GetVersionInfoForTrackAsync(string track)
     {
-        var dalamudTrack = "staging";
+        var dalamudTrack = "release";
         if (this.overrides != null && this.overrides.ChannelTracks.TryGetValue(track, out var mapping))
         {
             dalamudTrack = mapping;
@@ -84,19 +81,8 @@ public class DalamudReleases
 
         // Extract the zip file to the extractDir
         using var zipStream = new MemoryStream(zipBytes);
-        // using var archive = new ZipArchive(zipStream);
-        // archive.ExtractToDirectory(extractDir.FullName);
-        var output = extractDir.FullName;
-        using (var archive = ArchiveFactory.Open(zipStream))
-        {
-            var reader = archive.ExtractAllEntries();
-
-            while (reader.MoveToNextEntry())
-            {
-                if (!reader.Entry.IsDirectory)
-                    reader.WriteEntryToDirectory(output, new ExtractionOptions() { ExtractFullPath = true, Overwrite = true });
-            }
-        }
+        using var archive = new ZipArchive(zipStream);
+        archive.ExtractToDirectory(extractDir.FullName);
 
         return extractDir;
     }

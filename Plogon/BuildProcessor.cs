@@ -74,11 +74,17 @@ public class BuildProcessor
     // If a plugin breaks with a missing runtime package you might want to add the package here.
     private readonly Dictionary<string, string[]> RUNTIME_PACKAGES = new()
     {
+        { ".NETStandard,Version=v2.0", new[]
+            { "2.0.0" }
+        },
+        { "net5.0", new[]
+            { "5.0.0" }
+        },
         { "net6.0", new[]
             { "6.0.0", "6.0.11" }
         },
         { "net7.0", new[]
-            { "7.0.0", "7.0.1", "7.0.14", "7.0.15", "7.0.17" }
+            { "7.0.0", "7.0.1", "7.0.14", "7.0.15" }
         },
         { "net8.0", new[]
             { "8.0.0" }
@@ -241,7 +247,6 @@ public class BuildProcessor
         foreach (var imagesListResponse in images)
         {
             var inspect = await this.dockerClient.Images.InspectImageAsync(imagesListResponse.ID);
-            Log.Verbose("Docker image id: {Id}", imagesListResponse.ID);
             inspects.Add(inspect);
         }
 
@@ -369,7 +374,20 @@ public class BuildProcessor
         }
 
         // fetch runtime packages
-        await Task.WhenAll(runtimeDependencies.Select(dependency => GetDependency(dependency.Item1, new() { Resolved = dependency.Item2 }, pkgFolder, client)));
+        try
+        {
+            await Task.WhenAll(
+                runtimeDependencies.Select(
+                    dependency => GetDependency(
+                        dependency.Item1,
+                        new() { Resolved = dependency.Item2 },
+                        pkgFolder,
+                        client)));
+        }
+        catch (Exception e)
+        {
+            Log.Warning(e, "Failed to fetch runtime dependency");
+        }
     }
 
     async Task GetNeeds(BuildTask task, DirectoryInfo needs)
@@ -588,11 +606,13 @@ public class BuildProcessor
 
         foreach (var runtime in lockFileData.Runtimes)
         {
+            // e.g. net7.0, net7.0/linux-x64, net7.0-windows7.0
+            var key = runtime.Key.Split('/', '-')[0];
             // check if framework identifier also specifies a runtime identifier
-            var runtimeId = runtime.Key.Split('/').Skip(1).FirstOrDefault();
+            var runtimeId = runtime.Key.Split('/').ElementAtOrDefault(1);
 
             // add runtime packages to dependency list
-            if (!RUNTIME_PACKAGES.TryGetValue(runtime.Key[..6], out string[]? versions))
+            if (!RUNTIME_PACKAGES.TryGetValue(key, out string[]? versions))
             {
                 throw new ArgumentOutOfRangeException($"Unknown runtime requested: {runtime}");
             }
@@ -813,14 +833,7 @@ public class BuildProcessor
         {
         }, null);
         repo.Reset(ResetMode.Hard, task.Manifest.Plugin.Commit);
-
-        foreach (var submodule in repo.Submodules)
-        {
-            repo.Submodules.Update(submodule.Name, new SubmoduleUpdateOptions
-            {
-                Init = true,
-            });
-        }
+        HandleSubmodules(repo);
 
         if (!await CheckIfTrueCommit(work, task.Manifest.Plugin.Commit))
             throw new Exception("Commit in manifest is not a true commit, please don't specify tags");
@@ -942,8 +955,7 @@ public class BuildProcessor
 
         if (exitCode == 0 && !commit && File.Exists(Path.Combine(task.Manifest.Directory.FullName, "images", "icon.png")) == false)
         {
-            Log.Information("Icon is missing");
-            //throw new MissingIconException();
+            throw new MissingIconException();
         }
 
         await this.dockerClient.Containers.RemoveContainerAsync(containerCreateResponse.ID,
@@ -1019,7 +1031,7 @@ public class BuildProcessor
                     if (this.s3Client != null)
                     {
                         var key =
-                            $"sources/{task.InternalName}/{task.Manifest.Plugin.Commit}/archive.zip";
+                            $"sources/{task.InternalName}/{task.Manifest.Plugin.Commit}.zip";
                         
                         // Check if exist
                         bool mustUpload;
@@ -1051,22 +1063,22 @@ public class BuildProcessor
                                 {
                                     new Tag
                                     {
-                                        Key = "AssemblyVersion",
+                                        Key = "dev.dalamud.plugin/Version",
                                         Value = version
                                     },
                                     new Tag
                                     {
-                                        Key = "Commit",
+                                        Key = "dev.dalamud.plugin/CommitHash",
                                         Value = task.Manifest.Plugin.Commit
                                     },
                                     new Tag
                                     {
-                                        Key = "Channel",
+                                        Key = "dev.dalamud.plugin/DistributionChannel",
                                         Value = task.Channel
                                     },
                                     new Tag
                                     {
-                                        Key = "InternalName",
+                                        Key = "dev.dalamud.plugin/InternalName",
                                         Value = task.InternalName
                                     }
                                 }
@@ -1156,6 +1168,21 @@ public class BuildProcessor
                 continue;
             
             CopySourceForArchive(dir, to.CreateSubdirectory(dir.Name), depth + 1);
+        }
+    }
+
+    private static void HandleSubmodules(Repository repo)
+    {
+        foreach (var submodule in repo.Submodules)
+        {
+            repo.Submodules.Update(submodule.Name, new SubmoduleUpdateOptions
+            {
+                Init = true,
+            });
+
+            // In the case of recursive submodules
+            var submoduleRepo = new Repository(Path.Combine(repo.Info.WorkingDirectory, submodule.Path));
+            HandleSubmodules(submoduleRepo);
         }
     }
 

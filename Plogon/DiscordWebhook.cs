@@ -27,12 +27,12 @@ public class DiscordWebhook
         this.Client = new DiscordWebhookClient(url);
     }
 
-    private static DateTime GetChinaStandardTime()
+    private static DateTime GetKoreaStandardTime()
     {
         var utc = DateTime.UtcNow;
-        var chinaStandardZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Shanghai");
-        var chinaStandardTime = TimeZoneInfo.ConvertTimeFromUtc(utc, chinaStandardZone);
-        return chinaStandardTime;
+        var koreaStandardZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Seoul");
+        var koreaStandardTime = TimeZoneInfo.ConvertTimeFromUtc(utc, koreaStandardZone);
+        return koreaStandardTime;
     }
 
     /// <summary>
@@ -46,11 +46,7 @@ public class DiscordWebhook
     {
         if (this.Client == null)
             throw new Exception("Webhooks not set up");
-        
-        if (message.Length > 4000)
-        {
-            message = message.Substring(0, 4000);
-        }
+
         var embed = new EmbedBuilder()
             .WithColor(color)
             .WithTitle(title)
@@ -58,13 +54,13 @@ public class DiscordWebhook
             .WithDescription(message)
             .Build();
 
-        var time = GetChinaStandardTime();
-        var username = "Odder";
-        var avatarUrl = "https://ottercorp.github.io/icons/odder.png";
+        var time = GetKoreaStandardTime();
+        var username = "도";
+        var avatarUrl = "https://ndiv.rayd.cc/icons/do.png";
         if (time.Hour is > 20 or < 7)
         {
-            username = "Otter";
-            avatarUrl = "https://ottercorp.github.io/icons/otter.png";
+            username = "화";
+            avatarUrl = "https://ndiv.rayd.cc/icons/hwa.png";
         }
 
         return await this.Client.SendMessageAsync(embeds: new[] { embed }, username: username, avatarUrl: avatarUrl);

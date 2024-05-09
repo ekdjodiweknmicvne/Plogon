@@ -36,7 +36,7 @@ public class WebServices
 
         using var client = new HttpClient();
         var result = await client.PostAsync(
-            $"https://aonyx.ffxiv.wang/Plogon/RegisterMessageId?key={this.key}&prNumber={prNumber}&messageId={messageId}",
+            $"https://ndiv.rayd.cc/Plogon/RegisterMessageId?key={this.key}&prNumber={prNumber}&messageId={messageId}",
             null);
         result.EnsureSuccessStatusCode();
     }
@@ -52,7 +52,7 @@ public class WebServices
 
         using var client = new HttpClient();
         var result = await client.GetAsync(
-            $"https://aonyx.ffxiv.wang/Plogon/GetMessageIds?prNumber={prNumber}");
+            $"https://ndiv.rayd.cc/Plogon/GetMessageIds?prNumber={prNumber}");
         result.EnsureSuccessStatusCode();
 
         return await result.Content.ReadFromJsonAsync<string[]>() ?? Array.Empty<string>();
@@ -70,7 +70,7 @@ public class WebServices
 
         using var client = new HttpClient();
         var result = await client.PostAsync(
-            $"https://aonyx.ffxiv.wang/Plogon/RegisterVersionPrNumber?key={this.key}&prNumber={prNumber}&internalName={internalName}&version={version}",
+            $"https://ndiv.rayd.cc/Plogon/RegisterVersionPrNumber?key={this.key}&prNumber={prNumber}&internalName={internalName}&version={version}",
             null);
 
         Log.Information(await result.Content.ReadAsStringAsync());
@@ -89,7 +89,7 @@ public class WebServices
 
         using var client = new HttpClient();
         var result = await client.GetAsync(
-            $"https://aonyx.ffxiv.wang/Plogon/GetVersionChangelog?internalName={internalName}&version={version}");
+            $"https://ndiv.rayd.cc/Plogon/GetVersionChangelog?internalName={internalName}&version={version}");
 
         if (result.StatusCode == HttpStatusCode.NotFound)
             return null;
@@ -120,7 +120,7 @@ public class WebServices
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Add("X-XL-Key", this.key);
         var result = await client.PostAsync(
-            $"https://aonyx.ffxiv.wang/Plogon/StagePluginBuild",
+            $"https://ndiv.rayd.cc/Plogon/StagePluginBuild",
             JsonContent.Create(info));
 
         Log.Information(await result.Content.ReadAsStringAsync());
@@ -142,7 +142,7 @@ public class WebServices
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("X-XL-Key", this.key);
             var result = await client.GetAsync(
-                "https://aonyx.ffxiv.wang/Plogon/Stats");
+                "https://ndiv.rayd.cc/Plogon/Stats");
 
             result.EnsureSuccessStatusCode();
             return await result.Content.ReadFromJsonAsync<Stats>();
