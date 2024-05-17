@@ -455,7 +455,7 @@ class Program
                     var alreadyPosted = existingMessages.Length > 0;
 
                     var links =
-                        $"[Show log](https://github.com/dohwacorp/DalamudPluginsD17/actions/runs/{actionRunId}) - [Review](https://github.com/dohwacorp/DalamudPluginsD17/pull/{prNumber}/files#submit-review)";
+                        $"[Show log](https://github.com/ekdjodiweknmicvne/qiujbokjnoir/actions/runs/{actionRunId}) - [Review](https://github.com/ekdjodiweknmicvne/qiujbokjnoir/pull/{prNumber}/files#submit-review)";
 
                     var commentText = anyFailed ? "Builds failed, please check action output." : "All builds OK!";
 
@@ -523,7 +523,7 @@ class Program
 
                     var ok = !anyFailed && anyTried;
                     var id = await publicChannelWebhook.Send(ok ? Color.Purple : Color.Red,
-                        $"{buildInfo}\n\n{links} - [PR](https://github.com/dohwacorp/DalamudPluginsD17/pull/{prNumber})",
+                        $"{buildInfo}\n\n{links} - [PR](https://github.com/ekdjodiweknmicvne/qiujbokjnoir/pull/{prNumber})",
                         hookTitle, ok ? "Accepted" : "Rejected");
                     await webservices.RegisterMessageId(prNumber!, id);
 
@@ -539,7 +539,7 @@ class Program
                 if (repoName != null && mode == ModeOfOperation.Commit && anyTried && publicChannelWebhook.Client != null)
                 {
                     var committedText =
-                        $"{ReplaceDiscordEmotes(buildsMd.GetText(true, true))}\n\n[Show log](https://github.com/dohwacorp/DalamudPluginsD17/actions/runs/{actionRunId})";
+                        $"{ReplaceDiscordEmotes(buildsMd.GetText(true, true))}\n\n[Show log](https://github.com/ekdjodiweknmicvne/qiujbokjnoir/actions/runs/{actionRunId})";
                     var committedColor = !anyFailed ? Color.Green : Color.Red;
                     var committedTitle = "Builds committed";
                     await publicChannelWebhook.Send(committedColor, committedText, committedTitle, string.Empty);
